@@ -1,0 +1,14 @@
+{
+  "name": "spaceinvaders",
+  "private": true,
+  "packageManager": "pnpm@10.30.3",
+  "engines": { "node": ">=22" },
+  "pnpm": { "onlyBuiltDependencies": ["esbuild"] },
+  "scripts": {
+    "dev": "pnpm --filter @spaceinvaders/web dev",
+    "build": "pnpm --filter @spaceinvaders/web build",
+    "preview": "pnpm --filter @spaceinvaders/web preview",
+    "typecheck": "pnpm --filter @spaceinvaders/web exec tsc -b",
+    "test": "pnpm --filter @spaceinvaders/web test"
+  }
+}
