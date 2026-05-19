@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { GameShell, GameTopbar, GameAuth, GameButton } from "@freegamestore/games";
+import { GameShell, GameTopbar, GameAuth, GameButton, useGameSounds } from "@freegamestore/games";
 import { useHighScore } from "./hooks/useHighScore";
+
+// useGameSounds reads SoundContext which GameShell provides INTERNALLY.
+// Calling it directly above <GameShell> would get a disconnected default;
+// AudioBridge is a tiny no-render child of GameShell that exposes the
+// real sounds API via ref to the App scope.
+type SoundsApi = ReturnType<typeof useGameSounds>;
+
+function AudioBridge({ apiRef }: { apiRef: React.MutableRefObject<SoundsApi | null> }) {
+  const sounds = useGameSounds();
+  apiRef.current = sounds;
+  return null;
+}
 
 const COLS = 9;
 const ROWS = 5;
@@ -74,6 +86,7 @@ export default function App() {
   const sizeRef = useRef({ w: 360, h: 480 });
   const keysRef = useRef<{ left: boolean; right: boolean; fire: boolean }>({ left: false, right: false, fire: false });
   const dragRef = useRef<{ active: boolean; lastX: number }>({ active: false, lastX: 0 });
+  const audioRef = useRef<SoundsApi | null>(null);
   const [score, setScore] = useState(0);
   const [livesUI, setLivesUI] = useState(3);
   const [waveUI, setWaveUI] = useState(1);
@@ -177,6 +190,7 @@ export default function App() {
     if (keysRef.current.fire && !s.bullet && s.fireCooldown <= 0) {
       s.bullet = { x: s.playerX, y: h - PLAYER_H - 12 };
       s.fireCooldown = 280;
+      audioRef.current?.playMove();
     }
 
     // Bullet
@@ -247,6 +261,7 @@ export default function App() {
           a.alive = false;
           s.bullet = null;
           const gained = ROW_SCORES[a.row] ?? 10;
+          audioRef.current?.playClear();
           setScore((sc) => {
             const ns = sc + gained;
             updateHighScore(ns);
@@ -270,7 +285,9 @@ export default function App() {
         s.bombs.splice(i, 1);
         s.lives -= 1;
         setLivesUI(s.lives);
+        audioRef.current?.playError();
         if (s.lives <= 0) {
+          audioRef.current?.playGameOver();
           setPhase("over");
           return;
         }
@@ -283,6 +300,7 @@ export default function App() {
     // Aliens reached bottom
     const lowest = s.aliens.filter((a) => a.alive).reduce((m, a) => Math.max(m, a.row), 0);
     if (s.alienOffsetY + lowest * (ALIEN_H + ALIEN_GAP) + ALIEN_H >= py) {
+      audioRef.current?.playGameOver();
       setPhase("over");
       return;
     }
@@ -291,6 +309,7 @@ export default function App() {
     if (s.aliens.every((a) => !a.alive)) {
       s.wave += 1;
       setWaveUI(s.wave);
+      audioRef.current?.playLevelUp();
       s.aliens = freshAliens();
       s.alienOffsetX = 30;
       s.alienOffsetY = 40 + (s.wave - 1) * 12;
@@ -432,6 +451,7 @@ export default function App() {
         />
       }
     >
+      <AudioBridge apiRef={audioRef} />
       <div
         style={{
           height: "100%",
