@@ -34,19 +34,22 @@ export default defineConfig({
           },
         ],
       },
+      // `min_viewport_width` is a FreeGameStore compliance field (the viewport-support
+      // check), not a standard manifest member, so the type is widened for it.
       manifest: {
         name: "Space Invaders",
         short_name: "Space Invaders",
         description: "Free space shooter game — part of FreeGameStore",
         start_url: "/",
         display: "standalone", orientation: "any",
+        min_viewport_width: 360,
         background_color: "#0f0f0f",
         theme_color: "#2563eb",
         icons: [
           { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
           { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
         ],
-      },
+      } as Record<string, unknown>,
     }),
   ],
   test: {

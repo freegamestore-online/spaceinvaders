@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GameShell, GameTopbar, GameAuth, GameButton, useGameSounds } from "@freegamestore/games";
 import { useHighScore } from "./hooks/useHighScore";
+import { useKeys } from "./hooks/useKeys";
 
 // useGameSounds reads SoundContext which GameShell provides INTERNALLY.
 // Calling it directly above <GameShell> would get a disconnected default;
@@ -142,7 +143,7 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<GameState | null>(null);
   const scaleRef = useRef(1);
-  const keysRef = useRef<{ left: boolean; right: boolean; fire: boolean }>({ left: false, right: false, fire: false });
+  const keysRef = useKeys();
   const dragRef = useRef<{ id: number | null; lastX: number }>({ id: null, lastX: 0 });
   const audioRef = useRef<SoundsApi | null>(null);
   const [score, setScore] = useState(0);
@@ -194,26 +195,6 @@ export default function App() {
     if (canvas.parentElement) ro.observe(canvas.parentElement);
     return () => ro.disconnect();
   }, [phase]);
-
-  // Keyboard
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" || e.key === "a") keysRef.current.left = true;
-      if (e.key === "ArrowRight" || e.key === "d") keysRef.current.right = true;
-      if (e.key === " " || e.key === "ArrowUp" || e.key === "w") { keysRef.current.fire = true; e.preventDefault(); }
-    };
-    const up = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" || e.key === "a") keysRef.current.left = false;
-      if (e.key === "ArrowRight" || e.key === "d") keysRef.current.right = false;
-      if (e.key === " " || e.key === "ArrowUp" || e.key === "w") keysRef.current.fire = false;
-    };
-    window.addEventListener("keydown", down);
-    window.addEventListener("keyup", up);
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, []);
 
   // Animation loop
   useEffect(() => {
